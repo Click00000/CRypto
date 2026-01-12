@@ -13,6 +13,7 @@ services:
   - type: redis
     name: efi-redis
     plan: free
+    ipAllowList: []  # Empty array allows all IPs
 
   # Backend API
   - type: web
