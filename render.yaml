@@ -57,13 +57,13 @@ services:
       - key: CORS_ORIGINS
         value: https://your-frontend.vercel.app  # Vercel deploy sonrası güncelleyin
 
-  # Worker
-  - type: worker
-    name: efi-worker
-    env: python
-    plan: free
-    buildCommand: cd ../backend && pip install -r requirements.txt && cd ../worker && pip install -r requirements.txt
-    startCommand: cd worker && celery -A app.celery_app worker --loglevel=info & celery -A app.celery_app beat --loglevel=info
+  # Worker (Note: Free plan doesn't support background workers, deploy manually)
+  # - type: worker
+  #   name: efi-worker
+  #   env: python
+  #   plan: free
+  #   buildCommand: cd ../backend && pip install -r requirements.txt && cd ../worker && pip install -r requirements.txt
+  #   startCommand: cd worker && celery -A app.celery_app worker --loglevel=info & celery -A app.celery_app beat --loglevel=info
     envVars:
       - key: DATABASE_URL
         fromDatabase:
