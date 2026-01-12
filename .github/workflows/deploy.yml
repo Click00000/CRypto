@@ -1,0 +1,26 @@
+name: Deploy to Render and Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Render deployment otomatik (webhook ile)
+  # Vercel deployment otomatik (GitHub integration ile)
+  
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Notification
+        run: |
+          echo "✅ Code pushed to GitHub"
+          echo "📦 Render: Auto-deploy via webhook (if configured)"
+          echo "🌐 Vercel: Auto-deploy via GitHub integration"
+          echo ""
+          echo "⚠️  İlk deployment için:"
+          echo "   1. Render Dashboard'da servisleri oluştur"
+          echo "   2. Vercel Dashboard'da project oluştur"
+          echo "   3. Environment variables ekle"
+          echo ""
+          echo "📖 Detaylar: AUTO_DEPLOY.md"

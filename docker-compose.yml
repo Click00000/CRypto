@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: efi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/efi_db
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-key-change-in-production-min-32-chars
+      APP_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8000
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: noreply@example.com
+      EVM_RPC_URL: ${EVM_RPC_URL:-}
+      BTC_MODE: ${BTC_MODE:-CORE_RPC}
+      BTC_RPC_URL: ${BTC_RPC_URL:-}
+      BTC_RPC_USER: ${BTC_RPC_USER:-}
+      BTC_RPC_PASS: ${BTC_RPC_PASS:-}
+      BTC_EXPLORER_BASE_URL: ${BTC_EXPLORER_BASE_URL:-}
+      BTC_EXPLORER_API_KEY: ${BTC_EXPLORER_API_KEY:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/efi_db
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-key-change-in-production-min-32-chars
+      APP_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8000
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: noreply@example.com
+      EVM_RPC_URL: ${EVM_RPC_URL:-}
+      BTC_MODE: ${BTC_MODE:-CORE_RPC}
+      BTC_RPC_URL: ${BTC_RPC_URL:-}
+      BTC_RPC_USER: ${BTC_RPC_USER:-}
+      BTC_RPC_PASS: ${BTC_RPC_PASS:-}
+      BTC_EXPLORER_BASE_URL: ${BTC_EXPLORER_BASE_URL:-}
+      BTC_EXPLORER_API_KEY: ${BTC_EXPLORER_API_KEY:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app worker --loglevel=info & celery -A app.celery_app beat --loglevel=info
+
+volumes:
+  postgres_data:

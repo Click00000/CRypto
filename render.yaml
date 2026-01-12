@@ -1,0 +1,89 @@
+# Render Blueprint - Otomatik deployment için
+# Render Dashboard'da "New Blueprint" seçip bu dosyayı kullanabilirsiniz
+
+services:
+  # PostgreSQL Database
+  - type: pgres
+    name: efi-db
+    plan: free
+    databaseName: efi_db
+    user: efi_user
+
+  # Redis Instance
+  - type: redis
+    name: efi-redis
+    plan: free
+
+  # Backend API
+  - type: web
+    name: efi-api
+    env: python
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt && alembic upgrade head
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: efi-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: efi-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRATION_HOURS
+        value: 168
+      - key: APP_BASE_URL
+        value: https://your-frontend.vercel.app  # Vercel deploy sonrası güncelleyin
+      - key: API_BASE_URL
+        sync: false  # Deploy sonrası manuel güncelleyin
+      - key: RESEND_API_KEY
+        sync: false  # Manuel ekleyin
+      - key: EMAIL_FROM
+        value: noreply@yourdomain.com  # Domain'inizi güncelleyin
+      - key: EVM_RPC_URL
+        sync: false  # Manuel ekleyin
+      - key: BTC_MODE
+        value: EXPLORER
+      - key: BTC_EXPLORER_BASE_URL
+        value: https://blockstream.info/api
+      - key: ADMIN_EMAIL
+        sync: false  # Manuel ekleyin
+      - key: CORS_ORIGINS
+        value: https://your-frontend.vercel.app  # Vercel deploy sonrası güncelleyin
+
+  # Worker
+  - type: worker
+    name: efi-worker
+    env: python
+    plan: free
+    buildCommand: cd ../backend && pip install -r requirements.txt && cd ../worker && pip install -r requirements.txt
+    startCommand: cd worker && celery -A app.celery_app worker --loglevel=info & celery -A app.celery_app beat --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: efi-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: efi-redis
+          property: connectionString
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: efi-api
+          property: JWT_SECRET
+      - key: EVM_RPC_URL
+        fromService:
+          type: web
+          name: efi-api
+          property: EVM_RPC_URL
+      - key: BTC_MODE
+        value: EXPLORER
+      - key: BTC_EXPLORER_BASE_URL
+        value: https://blockstream.info/api
