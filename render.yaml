@@ -3,7 +3,7 @@
 
 services:
   # PostgreSQL Database
-  - type: pgres
+  - type: postgresql
     name: efi-db
     plan: free
     databaseName: efi_db
