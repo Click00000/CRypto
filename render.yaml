@@ -1,14 +1,14 @@
 # Render Blueprint - Otomatik deployment için
 # Render Dashboard'da "New Blueprint" seçip bu dosyayı kullanabilirsiniz
 
-services:
+databases:
   # PostgreSQL Database
-  - type: pg
-    name: efi-db
-    plan: free
+  - name: efi-db
     databaseName: efi_db
     user: efi_user
+    plan: free
 
+services:
   # Redis Instance
   - type: redis
     name: efi-redis
