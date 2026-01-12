@@ -75,16 +75,26 @@ services:
           name: efi-redis
           property: connectionString
       - key: JWT_SECRET
-        fromService:
-          type: web
-          name: efi-api
-          property: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRATION_HOURS
+        value: 168
+      - key: APP_BASE_URL
+        sync: false  # Deploy sonrası manuel güncelleyin
+      - key: API_BASE_URL
+        sync: false  # Deploy sonrası manuel güncelleyin
+      - key: RESEND_API_KEY
+        sync: false  # Manuel ekleyin
+      - key: EMAIL_FROM
+        value: noreply@yourdomain.com
       - key: EVM_RPC_URL
-        fromService:
-          type: web
-          name: efi-api
-          property: EVM_RPC_URL
+        sync: false  # Manuel ekleyin
       - key: BTC_MODE
         value: EXPLORER
       - key: BTC_EXPLORER_BASE_URL
         value: https://blockstream.info/api
+      - key: ADMIN_EMAIL
+        sync: false  # Manuel ekleyin
+      - key: CORS_ORIGINS
+        sync: false  # Deploy sonrası manuel güncelleyin
